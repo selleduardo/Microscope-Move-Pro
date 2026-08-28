@@ -14,14 +14,16 @@ Edited on Fri Aug 28 2026
 import sys, time, os.path, datetime
 import numpy as np
 from threading import Timer, Thread, Lock
-from PyQt5 import uic
-from PyQt5.QtCore import Qt, QCoreApplication, QTimer, QPoint, QRectF, QDir
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QLabel, QColorDialog
-from PyQt5.QtGui import QIcon, QPixmap, QImage, QColor, QCursor, QTransform, QPainter, QBrush, QPolygon, QFont, QTextOption
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, QCoreApplication, QTimer, QPoint, QRectF, QDir
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QLabel, QColorDialog
+from PyQt6.QtGui import QIcon, QPixmap, QImage, QColor, QCursor, QTransform, QPainter, QBrush, QPolygon, QFont, QTextOption
 
 import PAXCam
 import IngaasCam
-import NewportMotors
+import USBCam
+
+import CorvusStage
 
 ilmd_available = False
 try:
@@ -40,8 +42,8 @@ class ImageAcquisition:
 
         self.cam = None
         self.camOpen = False
-        self.img = QImage(640, 512, QImage.Format_RGB32)
-        self.img.fill(Qt.black)
+        self.img = QImage(640, 512, QImage.Format.Format_RGB32)
+        self.img.fill(Qt.GlobalColor.black)
 
         self.started = False
         self.read_lock = Lock()
@@ -53,7 +55,9 @@ class ImageAcquisition:
         self.framecount = 0
 
     def OpenCam(self, camid):
-        if camid == "PAXCam":
+        if camid == "USBCam":
+            self.cam = USBCam.USBCam(0)
+        elif camid == "PAXCam":
             self.cam = PAXCam.PAXCam(0)
         elif camid == "IngaasCam":
             self.cam = IngaasCam.IngaasCam(0)
@@ -85,8 +89,8 @@ class ImageAcquisition:
             if self.camOpen:
                 self.img = self.cam.GetQImage()
             else:
-                self.img = QImage(640, 480, QImage.Format_RGB32)
-                self.img.fill(Qt.black)
+                self.img = QImage(640, 480, QImage.Format.Format_RGB32)
+                self.img.fill(Qt.GlobalColor.black)
             
             self.framecount += 1
             if self.framecount >= self.fpsframes:
@@ -168,10 +172,10 @@ class MainWindow(FormUI, WindowUI):
         Timer(0.2, self.DrawFixedScale).start()
         if self.camOpen and not self.capTimer.isActive():
             pix = QPixmap(self.camView.width(), self.camView.height())
-            pix.fill(Qt.black)
+            pix.fill(Qt.GlobalColor.black)
             img = self.img.scaled(self.camView.size(), Qt.KeepAspectRatio)
             painter = QPainter(pix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             pointx = int(np.round(np.fabs(self.camView.width() - img.width())/2))
             pointy = int(np.round(np.fabs(self.camView.height() - img.height())/2))
             painter.drawImage(pointx, pointy, img)
@@ -244,6 +248,7 @@ class MainWindow(FormUI, WindowUI):
 
     def SetupActions(self):
         #Buttons and etc
+        self.usbRadio.clicked.connect(self.ChangeCam)
         self.paxRadio.clicked.connect(self.ChangeCam)
         self.ingaasRadio.clicked.connect(self.ChangeCam)
         self.ingaasHGRadio.clicked.connect(self.ChangeCam)
@@ -318,7 +323,7 @@ class MainWindow(FormUI, WindowUI):
         self.actionExit.triggered.connect(self.Exit)
 
     def InitializeDevices(self):
-        self.motors = NewportMotors.NewportMotors()
+        self.motors = CorvusStage.Corvus()
         homing = False
         time.sleep(0.2)
         if self.motors.xOK:
@@ -354,7 +359,9 @@ class MainWindow(FormUI, WindowUI):
             self.getposTimer.start()
 
     def OpenCamera(self):
-        if self.paxRadio.isChecked():
+        if self.usbRadio.isChecked():
+            self.camThread.OpenCam("USBCam")
+        elif self.paxRadio.isChecked():
             self.camThread.OpenCam("PAXCam")
         elif self.ingaasRadio.isChecked():
             self.camThread.OpenCam("IngaasCam")
@@ -389,6 +396,8 @@ class MainWindow(FormUI, WindowUI):
             self.camOpen = False
             self.camThread = None
             self.statusbar.showMessage(f"FPS: {self.fps:.2f} (Camera closed)")
+        if self.motors is not None:
+            self.motors.Close()
             
 
     def OnStartButClicked(self):
@@ -425,10 +434,10 @@ class MainWindow(FormUI, WindowUI):
             self.videoBusy = True
             self.img = self.camThread.get()
             pix = QPixmap(self.camView.width(), self.camView.height())
-            pix.fill(Qt.black)
-            img = self.img.scaled(self.camView.size(), Qt.KeepAspectRatio)
+            pix.fill(Qt.GlobalColor.black)
+            img = self.img.scaled(self.camView.width(), self.camView.height())
             painter = QPainter(pix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             pointx = int(np.round(np.fabs(self.camView.width() - img.width())/2))
             pointy = int(np.round(np.fabs(self.camView.height() - img.height())/2))
             painter.drawImage(pointx, pointy, img)
@@ -469,9 +478,9 @@ class MainWindow(FormUI, WindowUI):
                 filename = filename + ".png"
             stackPix = QPixmap(self.camView.width(), self.camView.height())
             painter = QPainter(stackPix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             if self.camView.pixmap() is not None:
-                painter.drawPixmap(0,0,self.camView.pixmap().scaled(self.camView.size(), Qt.IgnoreAspectRatio))
+                painter.drawPixmap(0,0,self.camView.pixmap().scaled(self.camView.size(), Qt.AspectRatioMode.IgnoreAspectRatio))
             if self.scaleOverlay.pixmap() is not None:
                 painter.drawPixmap(0,0,self.scaleOverlay.pixmap())
             if self.fscaleOverlay.pixmap() is not None:
@@ -479,7 +488,7 @@ class MainWindow(FormUI, WindowUI):
             if self.markerOverlay.pixmap() is not None:
                 painter.drawPixmap(0,0,self.markerOverlay.pixmap())
             painter.end()
-            stackPix.toImage().scaled(self.camView.size(), Qt.IgnoreAspectRatio).save(filename)
+            stackPix.toImage().scaled(self.camView.size(), Qt.AspectRatioMode.IgnoreAspectRatio).save(filename)
         if recap:
             self.capTimer.start()
 
@@ -491,7 +500,7 @@ class MainWindow(FormUI, WindowUI):
         if filename != "":
             if filename[-4:] != ".png" and filename[-4:] != ".PNG":
                 filename = filename + ".png"
-            self.scaleOverlay.pixmap().toImage().scaled(self.camView.size(), Qt.IgnoreAspectRatio).save(filename)
+            self.scaleOverlay.pixmap().toImage().scaled(self.camView.size(), Qt.AspectRatioMode.IgnoreAspectRatio).save(filename)
         if recap:
             self.capTimer.start()
 
@@ -519,7 +528,7 @@ class MainWindow(FormUI, WindowUI):
         if filename != "":
             if filename[-4:] != ".png" and filename[-4:] != ".PNG":
                 filename = filename + ".png"
-            self.markerOverlay.pixmap().toImage().scaled(self.camView.size(), Qt.IgnoreAspectRatio).save(filename)
+            self.markerOverlay.pixmap().toImage().scaled(self.camView.size(), Qt.AspectRatioMode.IgnoreAspectRatio).save(filename)
         if recap:
             self.capTimer.start()
 
@@ -818,39 +827,39 @@ class MainWindow(FormUI, WindowUI):
             self.drawing = False
             self.drawlinemeasBut.setDown(False)
             pix = QPixmap(self.scaleOverlay.width(), self.scaleOverlay.height())
-            pix.fill(Qt.transparent)
+            pix.fill(Qt.GlobalColor.transparent)
             painter = QPainter(pix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             if self.scaleOverlay.pixmap() is not None:
                 painter.drawPixmap(0, 0, self.scaleOverlay.pixmap())
             painter.drawPixmap(0, 0, self.camOverlay.pixmap())
             self.scaleOverlay.setPixmap(pix)
             painter.end()
             pix0 = QPixmap(self.scaleOverlay.width(), self.scaleOverlay.height())
-            pix0.fill(Qt.transparent)
+            pix0.fill(Qt.GlobalColor.transparent)
             self.camOverlay.setPixmap(pix0)
         if event.button() == 1 and self.mouseMarkingDown:
             self.mouseMarkingDown = False
             self.marking = False
             self.placemarkerBut.setDown(False)
             pix = QPixmap(self.markerOverlay.width(), self.markerOverlay.height())
-            pix.fill(Qt.transparent)
+            pix.fill(Qt.GlobalColor.transparent)
             painter = QPainter(pix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             if self.markerOverlay.pixmap() is not None:
                 painter.drawPixmap(0, 0, self.markerOverlay.pixmap())
             painter.drawPixmap(0, 0, self.camOverlay.pixmap())
             self.markerOverlay.setPixmap(pix)
             painter.end()
             pix0 = QPixmap(self.markerOverlay.width(), self.markerOverlay.height())
-            pix0.fill(Qt.transparent)
+            pix0.fill(Qt.GlobalColor.transparent)
             self.camOverlay.setPixmap(pix0)
         if event.button() == 2 and self.mouseGoDown:
             self.mouseGoDown = False
             self.movXTimer.stop()
             self.movYTimer.stop()
             pix = QPixmap(self.scaleOverlay.width(), self.scaleOverlay.height())
-            pix.fill(Qt.transparent)
+            pix.fill(Qt.GlobalColor.transparent)
             self.camOverlay.setPixmap(pix)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.getcontposTimer.stop()
@@ -878,7 +887,7 @@ class MainWindow(FormUI, WindowUI):
 
     def CreateBlankImg(self, w, h):
         img = QImage(w, h, QImage.Format_ARGB32)
-        img.fill(Qt.transparent)
+        img.fill(Qt.GlobalColor.transparent)
         return img
 
     def SetDrawColor(self):
@@ -892,8 +901,8 @@ class MainWindow(FormUI, WindowUI):
         pen.setWidthF(thick)
         painter.setPen(pen)
         if fill:
-            painter.setBrush(QBrush(color, Qt.SolidPattern))
-        painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
+        painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
         return painter
 
     def DrawGoOverlay(self):
@@ -926,7 +935,7 @@ class MainWindow(FormUI, WindowUI):
         arrow3 = QPoint(self.mouseX, self.mouseY)
 
         pix = QPixmap(self.scaleOverlay.width(), self.scaleOverlay.height())
-        pix.fill(Qt.transparent)
+        pix.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pix)
         painter = self.SetDrawPen(painter, 2*self.thick, self.drawColor, True)
         painter.setFont(QFont("Sans", pointSize=int(np.round(11*(thick**(1/3))))))
@@ -981,7 +990,7 @@ class MainWindow(FormUI, WindowUI):
             textangle += 180
 
         pix = QPixmap(self.scaleOverlay.width(), self.scaleOverlay.height())
-        pix.fill(Qt.transparent)
+        pix.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pix)
         painter = self.SetDrawPen(painter, thick, self.drawColor, False)
         painter.setFont(QFont("Sans", pointSize=int(np.round(11*(thick**(1/3))))))
@@ -1000,7 +1009,7 @@ class MainWindow(FormUI, WindowUI):
 
     def ClearLineMeasurement(self):
         pix = QPixmap(self.markerOverlay.width(), self.markerOverlay.height())
-        pix.fill(Qt.transparent)
+        pix.fill(Qt.GlobalColor.transparent)
         self.scaleOverlay.setPixmap(pix)
 
     def DrawMarkerOverlay(self, size):
@@ -1019,7 +1028,7 @@ class MainWindow(FormUI, WindowUI):
             markertype = 4
 
         pix = QPixmap(self.markerOverlay.width(), self.markerOverlay.height())
-        pix.fill(Qt.transparent)
+        pix.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pix)
         painter = self.SetDrawPen(painter, self.drawthickSpin.value(), self.drawColor, False)
         painter.setFont(QFont("Sans", pointSize=size))
@@ -1061,7 +1070,7 @@ class MainWindow(FormUI, WindowUI):
 
     def ClearMarker(self):
         pix = QPixmap(self.markerOverlay.width(), self.markerOverlay.height())
-        pix.fill(Qt.transparent)
+        pix.fill(Qt.GlobalColor.transparent)
         self.markerOverlay.setPixmap(pix)
 
     def DrawFixedScale(self):
@@ -1097,10 +1106,10 @@ class MainWindow(FormUI, WindowUI):
             labelHeight = int(np.round(midtickh1*6.5))
 
             pix = QPixmap(self.fscaleOverlay.width(), self.fscaleOverlay.height())
-            pix.fill(Qt.transparent)
+            pix.fill(Qt.GlobalColor.transparent)
             now = datetime.datetime.now()
             painter = QPainter(pix)
-            painter.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform, True)
+            painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform, True)
             self.SetDrawPen(painter, linewidth, QColor(0, 0, 0, 160), True)
             painter.drawRect(0, self.camView.height() - labelHeight, self.camView.width(), labelHeight)
             self.SetDrawPen(painter, linewidth, scaleColor, False)
@@ -1113,14 +1122,14 @@ class MainWindow(FormUI, WindowUI):
             painter.setFont(QFont("Sans", pointSize=int(1.5*midtickh1)))
             rect = QRectF(0, bottom - 4*midtickh1, self.camView.width(), midtickh1*3)
             rect2 = QRectF(0, bottom - 1*midtickh1, self.camView.width(), midtickh1*3)
-            painter.drawText(rect, str(micronScale) + " " + u"\u03BC" + "m", QTextOption(Qt.AlignHCenter))
-            painter.drawText(rect2, " LCO", QTextOption(Qt.AlignLeft))
-            painter.drawText(rect2, str(now.year) + "-" + str(now.month) + "-" + str(now.day) + " ", QTextOption(Qt.AlignRight))
+            painter.drawText(rect, str(micronScale) + " " + u"\u03BC" + "m", QTextOption(Qt.AlignmentFlag.AlignHCenter))
+            painter.drawText(rect2, " LCO", QTextOption(Qt.AlignmentFlag.AlignLeft))
+            painter.drawText(rect2, str(now.year) + "-" + str(now.month) + "-" + str(now.day) + " ", QTextOption(Qt.AlignmentFlag.AlignRight))
             painter.end()
             self.fscaleOverlay.setPixmap(pix)
         else:
             pix = QPixmap(self.fscaleOverlay.width(), self.fscaleOverlay.height())
-            pix.fill(Qt.transparent)
+            pix.fill(Qt.GlobalColor.transparent)
             self.fscaleOverlay.setPixmap(pix)
 
     def CalcCalibrationScale(self):
@@ -1148,9 +1157,9 @@ class MainWindow(FormUI, WindowUI):
         about.setWindowTitle("Reserved")
         about.setText("<b>Reserved Menu</b>")
         about.setInformativeText(aboutText)
-        about.setStandardButtons(QMessageBox.Ok)
-        about.setDefaultButton(QMessageBox.Ok)
-        about.setIconPixmap(QPixmap(f"hourglass.png").scaledToHeight(64, Qt.SmoothTransformation))
+        about.setStandardButtons(QMessageBox.StandardButton.Ok)
+        about.setDefaultButton(QMessageBox.StandardButton.Ok)
+        about.setIconPixmap(QPixmap(f"hourglass.png").scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
@@ -1162,9 +1171,9 @@ class MainWindow(FormUI, WindowUI):
         about.setWindowTitle("Quick Guide")
         about.setText("<b>Quick Guide</b>")
         about.setInformativeText(aboutText)
-        about.setStandardButtons(QMessageBox.Ok)
-        about.setDefaultButton(QMessageBox.Ok)
-        about.setIconPixmap(QPixmap(f"guide.png").scaledToHeight(64, Qt.SmoothTransformation))
+        about.setStandardButtons(QMessageBox.StandardButton.Ok)
+        about.setDefaultButton(QMessageBox.StandardButton.Ok)
+        about.setIconPixmap(QPixmap(f"guide.png").scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
@@ -1208,10 +1217,10 @@ class MainWindow(FormUI, WindowUI):
         about.setWindowTitle("About Python")
         about.setText("<b>About Python</b>")
         about.setInformativeText(aboutText)
-        about.setStandardButtons(QMessageBox.Ok)
-        about.setDefaultButton(QMessageBox.Ok)
+        about.setStandardButtons(QMessageBox.StandardButton.Ok)
+        about.setDefaultButton(QMessageBox.StandardButton.Ok)
         pyicon = np.random.randint(1, 3)
-        about.setIconPixmap(QPixmap(f"python_{pyicon}.png").scaled(64,64, Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+        about.setIconPixmap(QPixmap(f"python_{pyicon}.png").scaled(64,64, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
@@ -1241,4 +1250,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

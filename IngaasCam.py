@@ -8,7 +8,7 @@ Created on Tue Feb  6 10:42:02 2018
 
 import cv2
 import numpy as np
-from PyQt5.QtGui import QImage
+from PyQt6.QtGui import QImage
 import ctypes
 import time
 
@@ -116,7 +116,7 @@ class IngaasCam:
         frame = self.GetFrameMatrix()
         w = len(frame[0])
         h = len(frame)
-        img = QImage(frame.data, w, h, QImage.Format_Grayscale8)
+        img = QImage(frame.data, w, h, QImage.Format.Format_Grayscale8)
         #img = img.convertToFormat(QImage.Format_RGB888)
         return img
     

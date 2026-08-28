@@ -1252,12 +1252,19 @@
            </spacer>
           </item>
           <item>
-           <widget class="QRadioButton" name="paxRadio">
+           <widget class="QRadioButton" name="usbRadio">
             <property name="text">
-             <string>PAX</string>
+             <string>USB</string>
             </property>
             <property name="checked">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="paxRadio">
+            <property name="text">
+             <string>PAX</string>
             </property>
            </widget>
           </item>
