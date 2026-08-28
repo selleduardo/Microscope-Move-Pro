@@ -6,7 +6,7 @@ Created on Wed Jan 31 13:02:26 2018
 @author: pfjarschel
 """
 
-import visa
+import pyvisa as visa
 import time
 import numpy as np
 from threading import Timer
