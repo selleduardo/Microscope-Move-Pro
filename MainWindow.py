@@ -4,6 +4,11 @@
 Created on Wed Jan 31 17:52:19 2018
 
 @author: pfjarschel
+
+Edited on Fri Aug 28 2026
+
+@author: esell
+
 """
 
 import sys, time, os.path, datetime
@@ -1215,6 +1220,7 @@ class MainWindow(FormUI, WindowUI):
                     "<p>This software is made with Python and PyQt.</p>" \
                     "<p>Copyright &copy; 2020</p>" \
                     "<p>By Paulo Jarschel, no rights reserved.</p>" \
+                    "<p>Edited by Eduardo Sell Gonçalves, no rights reserved.</p>" \
 
         QMessageBox.about(self, "About", aboutText)
 
