@@ -348,7 +348,7 @@ class MainWindow(FormUI, WindowUI):
         if homing:
             time.sleep(0.5)
             box = QMessageBox()
-            box.setIcon(QMessageBox.Warning)
+            box.setIcon(QMessageBox.Icon.Warning)
             box.setText("One or more motors need homing. Before continuing, please confirm that the microscope " +
                         "lens is very far from any object. Since in the homing process the whole tube will " +
                         "move down considerably, this is VERY IMPORTANT!\n\n By clicking OK, you accept that " +
