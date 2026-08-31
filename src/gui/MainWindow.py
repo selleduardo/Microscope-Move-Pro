@@ -12,6 +12,7 @@ Edited on Fri Aug 28 2026
 """
 
 import sys, time, os.path, datetime
+from pathlib import Path
 import numpy as np
 from threading import Timer, Thread, Lock
 from PyQt6 import uic
@@ -19,11 +20,11 @@ from PyQt6.QtCore import Qt, QCoreApplication, QTimer, QPoint, QRectF, QDir
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QLabel, QColorDialog
 from PyQt6.QtGui import QIcon, QPixmap, QImage, QColor, QCursor, QTransform, QPainter, QBrush, QPolygon, QFont, QTextOption
 
-import PAXCam
-import IngaasCam
-import USBCam
+# from hardware import PAXCam
+# from hardware import IngaasCam
+from hardware import USBCam
 
-import CorvusStage
+from hardware import CorvusStage
 
 ilmd_available = False
 try:
@@ -32,8 +33,15 @@ try:
 except:
     pass
 
+# Paths are resolved relative to this file so the app works regardless of
+# the current working directory it's launched from.
+GUI_DIR = Path(__file__).resolve().parent
+BASE_DIR = GUI_DIR.parent.parent
+ICONS_DIR = BASE_DIR / "resources" / "icons"
+IMAGES_DIR = BASE_DIR / "resources" / "images"
+POSITIONS_FILE = BASE_DIR / "positions.txt"
 
-FormUI, WindowUI = uic.loadUiType("MainWindow_UI.ui")
+FormUI, WindowUI = uic.loadUiType(str(GUI_DIR / "MainWindow_UI.ui"))
 
 
 class ImageAcquisition:
@@ -55,14 +63,15 @@ class ImageAcquisition:
         self.framecount = 0
 
     def OpenCam(self, camid):
-        if camid == "USBCam":
-            self.cam = USBCam.USBCam(0)
-        elif camid == "PAXCam":
-            self.cam = PAXCam.PAXCam(0)
-        elif camid == "IngaasCam":
-            self.cam = IngaasCam.IngaasCam(0)
-        elif camid == "IngaasCamHG":
-            self.cam = IngaasCam.IngaasCam(1)
+        # if camid == "USBCam":
+        #     self.cam = USBCam.USBCam(0)
+        # elif camid == "PAXCam":
+        #     self.cam = PAXCam.PAXCam(0)
+        # elif camid == "IngaasCam":
+        #     self.cam = IngaasCam.IngaasCam(0)
+        # elif camid == "IngaasCamHG":
+        #     self.cam = IngaasCam.IngaasCam(1)
+        self.cam = USBCam.USBCam(0)
 
         if self.cam.camOK:
             self.camOpen = True
@@ -161,7 +170,7 @@ class MainWindow(FormUI, WindowUI):
         self.setupOtherUi()
         self.SetupActions()
         self.show()
-        self.setWindowIcon(QIcon("micro.ico"))
+        self.setWindowIcon(QIcon(str(ICONS_DIR / "micro.ico")))
 
         #self.delayedInit = Timer(0.1, self.InitializeDevices)
         #self.delayedInit.start()
@@ -192,6 +201,15 @@ class MainWindow(FormUI, WindowUI):
     resizeEvent = OnWindowResize
 
     def setupOtherUi(self):
+        # PyQt6's dynamic uic loader can't resolve <pixmap>/<iconset> paths
+        # that contain a subdirectory, so the default (disconnected) icons
+        # are set here instead of in the .ui file.
+        self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_red.png")))
+        self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_red.png")))
+        self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_red.png")))
+        self.camOK.setPixmap(QPixmap(str(ICONS_DIR / "led_red.png")))
+        self.emergBut.setIcon(QIcon(str(ICONS_DIR / "redbutton_stop.png")))
+
         self.scaleOverlay = QLabel(self.camView)
         self.scaleOverlay.setText("")
         self.markerOverlay = QLabel(self.camView)
@@ -224,7 +242,7 @@ class MainWindow(FormUI, WindowUI):
         self.camOverlay.resize(self.camView.width(), self.camView.height())
 
     def LoadSavedPos(self):
-        posfilename = "positions.txt"
+        posfilename = str(POSITIONS_FILE)
         if not os.path.isfile(posfilename):
             with open(posfilename, "w") as posfile:
                 posfile.write("[0.000, 0.000, 0.000]\t0.000,0.000,0.000\n")
@@ -249,9 +267,9 @@ class MainWindow(FormUI, WindowUI):
     def SetupActions(self):
         #Buttons and etc
         self.usbRadio.clicked.connect(self.ChangeCam)
-        self.paxRadio.clicked.connect(self.ChangeCam)
-        self.ingaasRadio.clicked.connect(self.ChangeCam)
-        self.ingaasHGRadio.clicked.connect(self.ChangeCam)
+        # self.paxRadio.clicked.connect(self.ChangeCam)
+        # self.ingaasRadio.clicked.connect(self.ChangeCam)
+        # self.ingaasHGRadio.clicked.connect(self.ChangeCam)
         self.startBut.clicked.connect(self.OnStartButClicked)
         self.stopBut.clicked.connect(self.OnStopButClicked)
         self.saveFrameBut.clicked.connect(self.SaveFrame)
@@ -327,22 +345,22 @@ class MainWindow(FormUI, WindowUI):
         homing = False
         time.sleep(0.2)
         if self.motors.xOK:
-            self.xOK.setPixmap(QPixmap("green_led.png"))
+            self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             self.xPosSpin.setValue(self.motors.xPOS)
         elif self.motors.xhoming:
-            self.xOK.setPixmap(QPixmap("yellow_led.png"))
+            self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             homing = True
         if self.motors.yOK:
-            self.yOK.setPixmap(QPixmap("green_led.png"))
+            self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             self.yPosSpin.setValue(self.motors.yPOS)
         elif self.motors.yhoming:
-            self.yOK.setPixmap(QPixmap("yellow_led.png"))
+            self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             homing = True
         if self.motors.zOK:
-            self.zOK.setPixmap(QPixmap("green_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             self.zPosSpin.setValue(self.motors.zPOS)
         elif self.motors.zhoming:
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             homing = True
 
         if homing:
@@ -361,16 +379,16 @@ class MainWindow(FormUI, WindowUI):
     def OpenCamera(self):
         if self.usbRadio.isChecked():
             self.camThread.OpenCam("USBCam")
-        elif self.paxRadio.isChecked():
-            self.camThread.OpenCam("PAXCam")
-        elif self.ingaasRadio.isChecked():
-            self.camThread.OpenCam("IngaasCam")
-        elif self.ingaasHGRadio.isChecked():
-            self.camThread.OpenCam("IngaasCamHG")
+        # elif self.paxRadio.isChecked():
+        #     self.camThread.OpenCam("PAXCam")
+        # elif self.ingaasRadio.isChecked():
+        #     self.camThread.OpenCam("IngaasCam")
+        # elif self.ingaasHGRadio.isChecked():
+        #     self.camThread.OpenCam("IngaasCamHG")
 
         if self.camThread.cam.camOK:
             self.camOpen = True
-            self.camOK.setPixmap(QPixmap("green_led.png"))
+            self.camOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             self.gainSlider.setValue(int(self.camThread.cam.GetGain()))
             self.exposureSlider.setValue(int(self.camThread.cam.GetExposure()))
             self.CalcCalibrationScale()
@@ -380,7 +398,7 @@ class MainWindow(FormUI, WindowUI):
             recap = self.capTimer.isActive()
             self.capTimer.stop()
             self.camOpen = False
-            self.camOK.setPixmap(QPixmap("red_led.png"))
+            self.camOK.setPixmap(QPixmap(str(ICONS_DIR / "led_red.png")))
             self.camThread.cam.Close()
             time.sleep(0.2)
             del self.camThread.cam
@@ -558,15 +576,15 @@ class MainWindow(FormUI, WindowUI):
             if xmov:
                 self.xPosSpin.setValue(self.motors.xPOS)
             elif self.motors.xOK:
-                self.xOK.setPixmap(QPixmap("green_led.png"))
+                self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             if ymov:
                 self.yPosSpin.setValue(self.motors.yPOS)
             elif self.motors.yOK:
-                self.yOK.setPixmap(QPixmap("green_led.png"))
+                self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             if zmov:
                 self.zPosSpin.setValue(self.motors.zPOS)
             elif self.motors.zOK:
-                self.zOK.setPixmap(QPixmap("green_led.png"))
+                self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             if not (xmov or ymov or zmov):
                 self.getposTimer.stop()
             self.getposBusy = False
@@ -574,55 +592,55 @@ class MainWindow(FormUI, WindowUI):
     def MoveUp(self):
         if self.motors.yOK:
             self.motors.MoveRelative(2, self.xyStepSpin.value())
-            self.yOK.setPixmap(QPixmap("yellow_led.png"))
+            self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def MoveDown(self):
         if self.motors.yOK:
             self.motors.MoveRelative(2, -self.xyStepSpin.value())
-            self.yOK.setPixmap(QPixmap("yellow_led.png"))
+            self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def MoveLeft(self):
         if self.motors.xOK:
             self.motors.MoveRelative(1, -self.xyStepSpin.value())
-            self.xOK.setPixmap(QPixmap("yellow_led.png"))
+            self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def MoveRight(self):
         if self.motors.xOK:
             self.motors.MoveRelative(1, self.xyStepSpin.value())
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def MoveZUp(self):
         if self.motors.zOK:
             self.motors.MoveRelative(3, self.zStepSpin.value())
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def MoveZDown(self):
         if self.motors.zOK:
             self.motors.MoveRelative(3, -self.zStepSpin.value())
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def OnXPosChanged(self):
         if self.motors.xOK:
             self.motors.MoveAbsolute(1, self.xPosSpin.value())
-            self.xOK.setPixmap(QPixmap("yellow_led.png"))
+            self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def OnYPosChanged(self):
         if self.motors.yOK:
             self.motors.MoveAbsolute(2, self.yPosSpin.value())
-            self.yOK.setPixmap(QPixmap("yellow_led.png"))
+            self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def OnZPosChanged(self):
         if self.motors.zOK:
             self.motors.MoveAbsolute(3, self.zPosSpin.value())
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getposTimer.start()
 
     def SavePosition(self):
@@ -655,7 +673,7 @@ class MainWindow(FormUI, WindowUI):
 
         self.posdb.append([self.savedposCombo.currentText(),[self.xPosSpin.value(),
                            self.yPosSpin.value(), self.zPosSpin.value()]])
-        with open("positions.txt", "a") as posfile:
+        with open(POSITIONS_FILE, "a") as posfile:
             posfile.write(self.savedposCombo.currentText() + "\t" + str(self.xPosSpin.value()) + "," +
                           str(self.yPosSpin.value()) + "," + str(self.zPosSpin.value()) + "\n")
             posfile.close()
@@ -679,7 +697,7 @@ class MainWindow(FormUI, WindowUI):
             QMessageBox.warning(self, "Wait!", "Not permitted to delete base positions!")
 
     def RebuildPositionsFile(self):
-        with open("positions.txt", "w") as posfile:
+        with open(POSITIONS_FILE, "w") as posfile:
             for i in range(0, len(self.posdb)):
                 posfile.write(self.posdb[i][0] + "\t" + str(self.posdb[i][1][0]) + "," +
                             str(self.posdb[i][1][1]) + "," + str(self.posdb[i][1][2]) + "\n")
@@ -694,26 +712,26 @@ class MainWindow(FormUI, WindowUI):
             zmov = self.motors.AxisMoving(3)
             if xmov and self.motors.xOK:
                 self.xPosSpin.setValue(self.motors.xPOS)
-                self.xOK.setPixmap(QPixmap("yellow_led.png"))
+                self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             elif self.motors.xOK:
-                self.xOK.setPixmap(QPixmap("green_led.png"))
+                self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             if ymov and self.motors.yOK:
                 self.yPosSpin.setValue(self.motors.yPOS)
-                self.yOK.setPixmap(QPixmap("yellow_led.png"))
+                self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             elif self.motors.yOK:
-                self.yOK.setPixmap(QPixmap("green_led.png"))
+                self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             if zmov and self.motors.zOK:
                 self.zPosSpin.setValue(self.motors.zPOS)
-                self.zOK.setPixmap(QPixmap("yellow_led.png"))
+                self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             elif self.motors.zOK:
-                self.zOK.setPixmap(QPixmap("green_led.png"))
+                self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_green.png")))
             self.getcontposBusy = False
 
     def OnZSliderClick(self):
         self.OnZPosChanged()
         self.movZTimer.start()
         if self.motors.zOK:
-            self.zOK.setPixmap(QPixmap("yellow_led.png"))
+            self.zOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getcontposTimer.start()
 
     def OnZSliderChanged(self):
@@ -742,8 +760,8 @@ class MainWindow(FormUI, WindowUI):
     def GetMousePress(self, event):
         self.FixOverlays()
 
-        self.mouseX0 = event.x()
-        self.mouseY0 = event.y()
+        self.mouseX0 = event.position().x()
+        self.mouseY0 = event.position().y()
         self.mouseX = self.mouseX0
         self.mouseY = self.mouseY0
 
@@ -771,9 +789,9 @@ class MainWindow(FormUI, WindowUI):
             self.movXTimer.start()
             self.movYTimer.start()
             if self.motors.xOK:
-                self.xOK.setPixmap(QPixmap("yellow_led.png"))
+                self.xOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             if self.motors.yOK:
-                self.yOK.setPixmap(QPixmap("yellow_led.png"))
+                self.yOK.setPixmap(QPixmap(str(ICONS_DIR / "led_yellow.png")))
             self.getcontposTimer.start()
 
             self.DrawGoOverlay()
@@ -783,8 +801,8 @@ class MainWindow(FormUI, WindowUI):
             QApplication.setOverrideCursor(cursor)
 
     def GetMouseMove(self, event):
-        mX = event.x()
-        mY = event.y()
+        mX = event.position().x()
+        mY = event.position().y()
         lock = False
         if mX < 0:
             mX = 0
@@ -869,8 +887,8 @@ class MainWindow(FormUI, WindowUI):
     def GetDoubleClick(self, event):
         if event.button() == 1 and self.camOpen:
             self.FixOverlays()
-            dx = event.x() - self.camView.width() / 2
-            dy = event.y() - self.camView.height() / 2
+            dx = event.position().x() - self.camView.width() / 2
+            dy = event.position().y() - self.camView.height() / 2
             ratioView = self.camView.width()/self.camView.height()
             ratioFrame = self.camThread.cam.frameW/self.camThread.cam.frameH
             scale = 1
@@ -1123,7 +1141,7 @@ class MainWindow(FormUI, WindowUI):
             rect = QRectF(0, bottom - 4*midtickh1, self.camView.width(), midtickh1*3)
             rect2 = QRectF(0, bottom - 1*midtickh1, self.camView.width(), midtickh1*3)
             painter.drawText(rect, str(micronScale) + " " + u"\u03BC" + "m", QTextOption(Qt.AlignmentFlag.AlignHCenter))
-            painter.drawText(rect2, " LCO", QTextOption(Qt.AlignmentFlag.AlignLeft))
+            painter.drawText(rect2, "CTI", QTextOption(Qt.AlignmentFlag.AlignLeft))
             painter.drawText(rect2, str(now.year) + "-" + str(now.month) + "-" + str(now.day) + " ", QTextOption(Qt.AlignmentFlag.AlignRight))
             painter.end()
             self.fscaleOverlay.setPixmap(pix)
@@ -1159,7 +1177,7 @@ class MainWindow(FormUI, WindowUI):
         about.setInformativeText(aboutText)
         about.setStandardButtons(QMessageBox.StandardButton.Ok)
         about.setDefaultButton(QMessageBox.StandardButton.Ok)
-        about.setIconPixmap(QPixmap(f"hourglass.png").scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
+        about.setIconPixmap(QPixmap(str(IMAGES_DIR / "hourglass.png")).scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
@@ -1173,7 +1191,7 @@ class MainWindow(FormUI, WindowUI):
         about.setInformativeText(aboutText)
         about.setStandardButtons(QMessageBox.StandardButton.Ok)
         about.setDefaultButton(QMessageBox.StandardButton.Ok)
-        about.setIconPixmap(QPixmap(f"guide.png").scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
+        about.setIconPixmap(QPixmap(str(IMAGES_DIR / "guide.png")).scaledToHeight(64, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
@@ -1182,36 +1200,36 @@ class MainWindow(FormUI, WindowUI):
 
     def AboutPython(self):
         aboutText = f"<p>This software is using Python version {sys.version}.</p>" \
-                    "<p>It uses the following modules:<br>"
+        #             "<p>It uses the following modules:<br>"
 
-        include_na = True
-        moduleslist = []
-        for module in sys.modules:
-            fullnm = str(sys.modules[module])
-            if not "." in module and not module.startswith("_") and not "(built-in)" in fullnm:
-                try:
-                    if ilmd_available:
-                        moduleslist.append(f"{module}\t{importlib.metadata.version(module)}, ")
-                except:
-                    try:
-                        moduleslist.append(f"{module}\t{sys.modules[module].__version__}, ")
-                    except:
-                        try:
-                            if type(sys.modules[module].version) is str:
-                                moduleslist.append(f"{module}\t{sys.modules[module].version}, ")
-                            else:
-                                moduleslist.append(f"{module}\t{sys.modules[module].version()}, ")
-                        except:
-                            try:
-                                moduleslist.append(f"{module}\t{sys.modules[module].VERSION}, ")
-                            except:
-                                if include_na:
-                                    moduleslist.append(f"{module}, ")
+        # include_na = True
+        # moduleslist = []
+        # for module in sys.modules:
+        #     fullnm = str(sys.modules[module])
+        #     if not "." in module and not module.startswith("_") and not "(built-in)" in fullnm:
+        #         try:
+        #             if ilmd_available:
+        #                 moduleslist.append(f"{module}\t{importlib.metadata.version(module)}, ")
+        #         except:
+        #             try:
+        #                 moduleslist.append(f"{module}\t{sys.modules[module].__version__}, ")
+        #             except:
+        #                 try:
+        #                     if type(sys.modules[module].version) is str:
+        #                         moduleslist.append(f"{module}\t{sys.modules[module].version}, ")
+        #                     else:
+        #                         moduleslist.append(f"{module}\t{sys.modules[module].version()}, ")
+        #                 except:
+        #                     try:
+        #                         moduleslist.append(f"{module}\t{sys.modules[module].VERSION}, ")
+        #                     except:
+        #                         if include_na:
+        #                             moduleslist.append(f"{module}, ")
 
-        moduleslist.sort(key=str.lower)
-        for text in moduleslist:
-            aboutText += text
-        aboutText = aboutText[:-2] + ".</p>"
+        # moduleslist.sort(key=str.lower)
+        # for text in moduleslist:
+        #     aboutText += text
+        # aboutText = aboutText[:-2] + ".</p>"
 
         about = QMessageBox()
         about.setWindowTitle("About Python")
@@ -1219,17 +1237,17 @@ class MainWindow(FormUI, WindowUI):
         about.setInformativeText(aboutText)
         about.setStandardButtons(QMessageBox.StandardButton.Ok)
         about.setDefaultButton(QMessageBox.StandardButton.Ok)
-        pyicon = np.random.randint(1, 3)
-        about.setIconPixmap(QPixmap(f"python_{pyicon}.png").scaled(64,64, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        # pyicon = np.random.randint(1, 3)
+        about.setIconPixmap(QPixmap(str(IMAGES_DIR / "python.png")).scaled(64,64, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation))
         about.show()
         about.exec()
 
     def About(self):
-        aboutText = "<p><b>LCO Microscope Move PRO v.0.9</b></p>" \
+        aboutText = "<p><b>Microscope Move PRO v.0.9</b></p>" \
                     "<p>This software is made with Python and PyQt.</p>" \
                     "<p>Copyright &copy; 2020</p>" \
-                    "<p>By Paulo Jarschel, no rights reserved.</p>" \
-                    "<p>Edited by Eduardo Sell Gonçalves, no rights reserved.</p>" \
+                    "<p>By Paulo Jarschel, edited by Eduardo Sell Gonçalves.</p>" \
+                    "<p>No rights reserved.</p>" \
 
         QMessageBox.about(self, "About", aboutText)
 
@@ -1242,12 +1260,3 @@ class MainWindow(FormUI, WindowUI):
     def closeEvent(self, event):
         self.capTimer.stop()
         self.CloseDevices()
-
-
-#Run
-if __name__ == "__main__":
-
-    app = QApplication(sys.argv)
-    window = MainWindow()
-
-    sys.exit(app.exec())

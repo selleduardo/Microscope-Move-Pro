@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1320</width>
-    <height>745</height>
+    <width>1441</width>
+    <height>888</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +61,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>red_led.png</pixmap>
+                <pixmap>led_red.png</pixmap>
                </property>
                <property name="scaledContents">
                 <bool>true</bool>
@@ -98,7 +101,7 @@
                   <number>10</number>
                  </property>
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                 </widget>
                </item>
@@ -131,7 +134,7 @@
                   <number>100</number>
                  </property>
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                 </widget>
                </item>
@@ -156,7 +159,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>red_led.png</pixmap>
+                <pixmap>led_red.png</pixmap>
                </property>
                <property name="scaledContents">
                 <bool>true</bool>
@@ -175,7 +178,7 @@
                <item>
                 <widget class="QDoubleSpinBox" name="xPosSpin">
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::NoButtons</enum>
+                  <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                  </property>
                  <property name="keyboardTracking">
                   <bool>false</bool>
@@ -209,7 +212,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>red_led.png</pixmap>
+                <pixmap>led_red.png</pixmap>
                </property>
                <property name="scaledContents">
                 <bool>true</bool>
@@ -228,7 +231,7 @@
                <item>
                 <widget class="QDoubleSpinBox" name="yPosSpin">
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::NoButtons</enum>
+                  <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                  </property>
                  <property name="keyboardTracking">
                   <bool>false</bool>
@@ -262,7 +265,7 @@
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>red_led.png</pixmap>
+                <pixmap>led_red.png</pixmap>
                </property>
                <property name="scaledContents">
                 <bool>true</bool>
@@ -281,7 +284,7 @@
                <item>
                 <widget class="QDoubleSpinBox" name="zPosSpin">
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::NoButtons</enum>
+                  <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                  </property>
                  <property name="keyboardTracking">
                   <bool>false</bool>
@@ -301,7 +304,7 @@
            <item>
             <spacer name="verticalSpacer_4">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -374,7 +377,7 @@
            <item>
             <spacer name="verticalSpacer_3">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -425,7 +428,7 @@
              <item>
               <spacer name="verticalSpacer_5">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -472,7 +475,7 @@
                 <number>75</number>
                </property>
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
               </widget>
              </item>
@@ -481,7 +484,7 @@
                <item>
                 <spacer name="verticalSpacer_2">
                  <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                  <enum>Qt::Orientation::Vertical</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -520,7 +523,7 @@
                <item>
                 <spacer name="verticalSpacer">
                  <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                  <enum>Qt::Orientation::Vertical</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -655,7 +658,7 @@
          <item>
           <spacer name="verticalSpacer_8">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -671,7 +674,7 @@
             <string>Microscope</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -792,7 +795,7 @@
          <item>
           <spacer name="verticalSpacer_9">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -808,7 +811,7 @@
             <string>Drawing</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -870,7 +873,7 @@
          <item>
           <spacer name="verticalSpacer_7">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -886,7 +889,7 @@
             <string>Markers</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1009,7 +1012,7 @@
          <item>
           <spacer name="verticalSpacer_10">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1025,7 +1028,7 @@
             <string>Measurement</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1078,7 +1081,7 @@
               <bool>true</bool>
              </property>
              <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
+              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
              </property>
              <property name="maximum">
               <number>1000000</number>
@@ -1108,7 +1111,7 @@
               <bool>true</bool>
              </property>
              <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
+              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
              </property>
              <property name="decimals">
               <number>4</number>
@@ -1140,7 +1143,7 @@
          <item>
           <spacer name="verticalSpacer_6">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1156,7 +1159,7 @@
             <string>Save Image</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
          </item>
@@ -1241,7 +1244,7 @@
           <item>
            <spacer name="horizontalSpacer_4">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -1253,32 +1256,14 @@
           </item>
           <item>
            <widget class="QRadioButton" name="usbRadio">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>USB</string>
             </property>
             <property name="checked">
              <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="paxRadio">
-            <property name="text">
-             <string>PAX</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ingaasRadio">
-            <property name="text">
-             <string>InGaAs</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ingaasHGRadio">
-            <property name="text">
-             <string>InGaAs HG</string>
             </property>
            </widget>
           </item>
@@ -1305,7 +1290,7 @@
            </size>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Panel</enum>
+           <enum>QFrame::Shape::Panel</enum>
           </property>
           <property name="text">
            <string>Camera Image</string>
@@ -1314,7 +1299,7 @@
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -1329,7 +1314,7 @@
          <number>1000</number>
         </property>
         <property name="orientation">
-         <enum>Qt::Vertical</enum>
+         <enum>Qt::Orientation::Vertical</enum>
         </property>
        </widget>
       </item>
@@ -1342,8 +1327,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1320</width>
-     <height>21</height>
+     <width>1441</width>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
