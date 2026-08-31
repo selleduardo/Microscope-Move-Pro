@@ -2,7 +2,7 @@
 
 Python application to control a microscope via a Corvus motorized stage, and capture its image via standard USB cv-compatible camera.
 
-## Running
+## Running (development)
 
 With dependencies installed (`pip install -r requirements.txt`):
 
@@ -24,6 +24,7 @@ resources/
   images/              # About-dialog images
 scripts/
   testCorvus.py        # manual smoke test for the Corvus stage driver
-Legacy/                # superseded modules (Newport motors, PAXCam, IngaasCam, old MainWindow) kept for reference
+legacy/                # superseded modules (Newport motors, PAXCam, IngaasCam, old MainWindow) kept for reference
+run.bat                # Windows launcher, see "Deploying on a shared Windows PC"
 positions.txt          # saved stage positions, generated on first run (git-ignored)
 ```
